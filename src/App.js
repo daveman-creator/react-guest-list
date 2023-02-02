@@ -6,6 +6,7 @@ export default function App() {
   const [guests, setGuests] = useState([]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [refetch, setRefetch] = useState(true);
   // const [isLoading, setIsLoading] = useState(true);
   // const [loader, showLoader, hideLoader] = useLoader();
   // const [isAttending, setIsAttending] = useState(false);
@@ -26,7 +27,7 @@ export default function App() {
     getGuests().catch((error) => console.log(error));
 
     // hideLoader();
-  }, []);
+  }, [refetch]);
 
   useEffect(() => {
     const getGuestsId = async () => {
@@ -50,19 +51,24 @@ export default function App() {
     return createdGuest;
   }
 
-  async function putGuestId(guest) {
-    console.log(guest);
-    const response = await fetch(`${baseUrl}/guests/${guest.id}`, {
+  async function putGuestId(id, attend) {
+    const response = await fetch(`${baseUrl}/guests/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ attending: !guest.attending }),
+      body: JSON.stringify({ attending: attend }),
     });
     const updatedGuest = await response.json();
     return updatedGuest;
   }
 
+  async function removeGuest(id) {
+    const response = await fetch(`${baseUrl}/guests/${id}`, {
+      method: 'DELETE',
+    });
+    const deletedGuest = await response.json();
+  }
   // if (isLoading) {
   //   return 'is Loading...';
   // }
@@ -82,16 +88,16 @@ export default function App() {
   const handleKeyDown = async (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      const newList = [...guests];
-      newList.push({
-        firstName: firstName,
-        lastName: lastName,
-      });
-      setGuests(newList);
+      // const newList = [...guests];
+      // newList.push({
+      //   firstName: firstName,
+      //   lastName: lastName,
+      // });
+      // setGuests(newList);
+      await postGuest();
       setFirstName('');
       setLastName('');
-      await postGuest();
-      await putGuestId();
+      setRefetch(!refetch);
     }
   };
   console.log(guests);
@@ -148,20 +154,32 @@ export default function App() {
                   type="checkbox"
                   checked={guest.attending}
                   // onChange={handleChangeIsAttending}
-                  onClick={(event) => {
+                  onChange={(event) => {
                     const checked = [...guests];
 
                     // checked[].guest.first.last = '';
                     guest.attending = event.currentTarget.checked;
                     // update the copy
                     setGuests(checked);
-                    putGuestId(guest);
+                    putGuestId(guest.id, guest.attending).catch((error) =>
+                      console.log(error),
+                    );
                   }}
                   // value={isAttending}
                 />
               </label>
               {guest.firstName} {guest.lastName}
               {guest.attending === true ? ' is attending' : ' is not attending'}
+              <button
+                className="RemoveButton"
+                type="button"
+                onClick={() => {
+                  removeGuest(guest.id).catch((error) => console.log(error));
+                  setRefetch(!refetch);
+                }}
+              >
+                Remove
+              </button>
             </div>
           );
         })}
