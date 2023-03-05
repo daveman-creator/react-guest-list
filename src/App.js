@@ -1,45 +1,18 @@
 import './App.css';
-import React, { useEffect, useState } from 'react';
-import logo from './logo.svg';
+import { useEffect, useState } from 'react';
 
 export default function App() {
-  const [guests, setGuests] = useState([]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [guestAPI, setGuestAPI] = useState([]);
   const [refetch, setRefetch] = useState(true);
-  // const [isLoading, setIsLoading] = useState(true);
-  // const [loader, showLoader, hideLoader] = useLoader();
-  // const [isAttending, setIsAttending] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDisabled, setIsDisabled] = useState(true);
   const baseUrl = 'http://localhost:4000';
+  // Enter a new guest
 
-  useEffect(() => {
-    const getGuests = async () => {
-      // showLoader();
-
-      const response = await fetch(`${baseUrl}/guests`);
-      const allGuests = await response.json();
-      // console.log(allGuests);
-      setGuests(allGuests);
-
-      // setDisabled(false);
-    };
-
-    getGuests().catch((error) => console.log(error));
-
-    // hideLoader();
-  }, [refetch]);
-
-  useEffect(() => {
-    const getGuestsId = async () => {
-      const response = await fetch(`${baseUrl}/guests/:id`);
-      const guest = await response.json();
-
-      setGuests(guest);
-    };
-    // getGuestsId().catch((error) => console.log(error));
-  }, []);
-
-  async function postGuest() {
+  async function handleSubmit(event) {
+    event.preventDefault();
     const response = await fetch(`${baseUrl}/guests`, {
       method: 'POST',
       headers: {
@@ -48,138 +21,122 @@ export default function App() {
       body: JSON.stringify({ firstName: firstName, lastName: lastName }),
     });
     const createdGuest = await response.json();
-    return createdGuest;
+    setRefetch(!refetch);
+    setFirstName('');
+    setLastName('');
+
+    console.log(createdGuest);
   }
 
-  async function putGuestId(id, attend) {
-    const response = await fetch(`${baseUrl}/guests/${id}`, {
+  // Update a guest
+
+  async function updateGuest(value, guestId) {
+    console.log(value, guestId);
+    await fetch(`${baseUrl}/guests/${guestId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ attending: attend }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attending: value }),
     });
-    const updatedGuest = await response.json();
-    return updatedGuest;
+    setRefetch(!refetch);
   }
 
-  async function removeGuest(id) {
-    const response = await fetch(`${baseUrl}/guests/${id}`, {
+  // Delete a guest
+
+  async function deleteGuest(id) {
+    await fetch(`${baseUrl}/guests/${id}`, {
       method: 'DELETE',
     });
-    const deletedGuest = await response.json();
+    const response = await fetch(`${baseUrl}/guests`);
+    const allGuests = await response.json();
+    setGuestAPI(allGuests);
   }
-  // if (isLoading) {
-  //   return 'is Loading...';
-  // }
 
-  const handleChangeFirstName = (event) => {
-    setFirstName(event.currentTarget.value);
-  };
+  // Delete all guests
 
-  const handleChangeLastName = (event) => {
-    setLastName(event.currentTarget.value);
-  };
-
-  // const handleChangeIsAttending = (event) => {
-  //   setIsAttending(event.currentTarget.checked);
-  // };
-
-  const handleKeyDown = async (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      // const newList = [...guests];
-      // newList.push({
-      //   firstName: firstName,
-      //   lastName: lastName,
-      // });
-      // setGuests(newList);
-      await postGuest();
-      setFirstName('');
-      setLastName('');
-      setRefetch(!refetch);
+  async function deleteAllGuests() {
+    for (const guest of guestAPI) {
+      await fetch(`${baseUrl}/guests/${guest.id}`, {
+        method: 'DELETE',
+      });
     }
-  };
-  console.log(guests);
+    const response = await fetch(`${baseUrl}/guests`);
+    const allGuests = await response.json();
+    setGuestAPI(allGuests);
+  }
+
+  // Show the Guests
+
+  useEffect(() => {
+    async function fetchUsers() {
+      const response = await fetch(`${baseUrl}/guests`);
+      const allGuests = await response.json();
+      setGuestAPI(allGuests);
+      console.log(allGuests);
+      setIsLoading(false);
+      setIsDisabled(false);
+    }
+
+    fetchUsers().catch((error) => console.log(error));
+  }, [refetch]);
+
+  // Loading Message
+
+  if (isLoading) {
+    return 'Loading...';
+  }
 
   return (
     <div>
-      <h1>Guest List</h1>
-      <br />
-      <br />
-      <label>
-        First name &nbsp;
-        <input onChange={handleChangeFirstName} value={firstName} />
-      </label>
-      <br />
-      <label>
-        Last name &nbsp;
+      <h1> Guest List</h1>
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="firstName">First name</label>
         <input
-          onChange={handleChangeLastName}
-          onKeyDown={handleKeyDown}
-          value={lastName}
+          id="firstName"
+          name="firstName"
+          value={firstName}
+          disabled={isDisabled}
+          placeholder="Enter first name here"
+          onChange={(event) => setFirstName(event.target.value)}
         />
-      </label>
-      <div data-test-id="guest">
-        <button
-          className="RemoveButton"
-          type="button"
-          onClick={() => {
-            const newState = [...guests];
-            newState.pop();
-            setGuests(newState);
-          }}
-        >
-          Remove
-        </button>
-      </div>
+        <label htmlFor="lastName">Last name</label>
+        <input
+          id="lastName"
+          name="lastName"
+          value={lastName}
+          disabled={isDisabled}
+          placeholder="Enter last name here"
+          onChange={(event) => setLastName(event.target.value)}
+        />
+        <p>Press Enter to submit!</p>
+        <div>
+          <button>Submit</button>
+          <button onClick={deleteAllGuests}>Delete all guests</button>
+        </div>
+      </form>
       <div>
-        <button
-          onClick={() => {
-            setGuests([]);
-          }}
-        >
-          Delete &nbsp;
-        </button>
-      </div>
-      <br />
-      <h2>Invited Guests</h2>
-      <div>
-        {guests.map((guest) => {
+        <h2>Guests</h2>
+        {guestAPI.map((guest) => {
           return (
-            // using prefixes for your ids is good practice
-            <div key={`guest-name-${guest.firstName}`}>
-              <label>
+            <div key={guest.id}>
+              <div data-test-id="guest">
+                <h3>
+                  {guest.firstName} {guest.lastName}
+                </h3>
                 <input
                   type="checkbox"
+                  aria-label="attending"
                   checked={guest.attending}
-                  // onChange={handleChangeIsAttending}
-                  onChange={(event) => {
-                    const checked = [...guests];
-
-                    // checked[].guest.first.last = '';
-                    guest.attending = event.currentTarget.checked;
-                    // update the copy
-                    setGuests(checked);
-                    putGuestId(guest.id, guest.attending).catch((error) =>
-                      console.log(error),
-                    );
-                  }}
-                  // value={isAttending}
+                  onChange={(event) =>
+                    updateGuest(event.currentTarget.checked, guest.id)
+                  }
                 />
-              </label>
-              {guest.firstName} {guest.lastName}
-              {guest.attending === true ? ' is attending' : ' is not attending'}
-              <button
-                className="RemoveButton"
-                type="button"
-                onClick={() => {
-                  removeGuest(guest.id).catch((error) => console.log(error));
-                  setRefetch(!refetch);
-                }}
-              >
-                Remove
-              </button>
+                <button
+                  aria-label={`Remove ${guest.firstName} ${guest.lastName}`}
+                  onClick={() => deleteGuest(guest.id)}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           );
         })}
