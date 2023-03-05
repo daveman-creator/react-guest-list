@@ -117,7 +117,7 @@ export default function App() {
         <h2>Guests</h2>
         {guestAPI.map((guest) => {
           return (
-            <div key={guest.id}>
+            <div key={`guest-${guest.id}`}>
               <div data-test-id="guest">
                 <h3>
                   {guest.firstName} {guest.lastName}
