@@ -8,7 +8,9 @@ export default function App() {
   const [refetch, setRefetch] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isDisabled, setIsDisabled] = useState(true);
-  const baseUrl = 'http://localhost:4000';
+  const baseUrl =
+    'https://express-guest-list-api-memory-data-store.daveman-creator.repl.co';
+
   // Enter a new guest
 
   async function handleSubmit(event) {
