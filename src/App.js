@@ -9,7 +9,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDisabled, setIsDisabled] = useState(true);
   const baseUrl =
-    'https://express-guest-list-api-memory-data-store.daveman-creator';
+    'https://express-guest-list-api-memory-data-store.daveman-creator.repl.co';
 
   // Enter a new guest
 
